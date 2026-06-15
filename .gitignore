@@ -1,0 +1,58 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Optional npm cache
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Vite specific
+vite.config.ts.timestamp-*
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Parcel / temp files
+.cache/
+.temp/
+
+# Local history (VSCode plugin)
+.history/
+
+# macOS system files
+.DS_Store
+**/.DS_Store
