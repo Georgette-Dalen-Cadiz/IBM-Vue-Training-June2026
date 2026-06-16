@@ -36,23 +36,23 @@ function handleDelete(id) {
   <div class="task-list-view">
     <h1>My Tasks</h1>
 
-    <!-- TODO 4: Render a <TaskCard> for each task using v-for
-         - Pass :task="task" as a prop
-         - Listen @complete="handleComplete"
-         - Listen @delete="handleDelete"
-         - Fill the "meta" named slot with the due date
-    -->
-    <TaskCard
-      v-for="task in tasks"
-      :key="task.id"
-      :task="task"
-      @complete="handleComplete"
-      @delete="handleDelete"
-    >
-      <template #meta>
-        Due: {{ task.dueDate }}
-      </template>
-    </TaskCard>
+    <div v-if="tasks.length > 0">
+      <TaskCard
+        v-for="task in tasks"
+        :key="task.id"
+        :task="task"
+        @complete="handleComplete"
+        @delete="handleDelete"
+      >
+        <template #meta>
+          Due: {{ task.dueDate }}
+        </template>
+      </TaskCard>
+    </div>
+
+    <div v-else class="empty-message">
+      No tasks here 🎉
+    </div>
   </div>
 </template>
 
@@ -64,4 +64,10 @@ function handleDelete(id) {
   font-family: Arial, sans-serif;
 }
 h1 { color: #1B2A4A; margin-bottom: 24px; }
+.empty-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-size: 14px;
+}
 </style>
