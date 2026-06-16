@@ -1,72 +1,96 @@
 <!--
 =============================================================
-  DAY 1 ASSIGNMENT — Reactive Task Counter App
+  DAY 1 ASSIGNMENT — Reactive Task Counter App (SOLUTION)
   Topic: Vue 3 Composition API (ref, computed, v-model, v-for)
+  
+  This solution includes all core requirements plus optional
+  extensions: filter bar, "Clear All Done" button, and task
+  priority (Low/Medium/High) with a select dropdown.
+  
+  Each section is annotated with the requirement it fulfills.
 =============================================================
 -->
 
 <script setup>
 import { ref, computed } from 'vue'
 
-// ── Reactive state ────────────────────────────────────────
-const newTaskName     = ref('')
-const newTaskPriority = ref('medium')
-const tasks           = ref([])
-const activeFilter    = ref('all')
+/* ========== REACTIVE STATE (ref) ========== */
 
+// Requirement: Use ref() for the text input value (initial empty string)
+const newTaskName = ref('')
+
+// Extension: ref for priority dropdown (default 'medium')
+const newTaskPriority = ref('medium')
+
+// Requirement: Use ref() for the tasks array (initial empty array)
+// Each task: { id, name, done, priority }
+const tasks = ref([])
+
+// Extension: ref for active filter ('all', 'pending', 'done')
+const activeFilter = ref('all')
+
+// Priority options for the dropdown select
 const priorityOptions = [
   { label: 'Low',    value: 'low'    },
   { label: 'Medium', value: 'medium' },
   { label: 'High',   value: 'high'   },
 ]
+
+// Filter options for the filter bar
 const filterOptions = ['all', 'pending', 'done']
 
-// ── Computed counts ───────────────────────────────────────
+/* ========== COMPUTED PROPERTIES (stats & filters) ========== */
+
+// Requirement: Use computed() for total, done, and pending counts
 const totalCount   = computed(() => tasks.value.length)
 const doneCount    = computed(() => tasks.value.filter(t => t.done).length)
 const pendingCount = computed(() => tasks.value.filter(t => !t.done).length)
 
-// ── Sorted + filtered list ────────────────────────────────
-// Pending tasks always appear before completed ones
-const sortedTasks = computed(() =>
-  [...tasks.value].sort((a, b) => Number(a.done) - Number(b.done))
-)
-
+// Extension: Filter tasks based on activeFilter value
 const filteredTasks = computed(() => {
-  if (activeFilter.value === 'done')    return tasks.value.filter(t =>  t.done)
-  if (activeFilter.value === 'pending') return tasks.value.filter(t => !t.done)
-  return sortedTasks.value
+  if (activeFilter.value === 'done') {
+    return tasks.value.filter(task => task.done)
+  }
+  if (activeFilter.value === 'pending') {
+    return tasks.value.filter(task => !task.done)
+  }
+  // 'all' filter - pending tasks appear first for better UX
+  return [...tasks.value].sort((a, b) => Number(a.done) - Number(b.done))
 })
 
-// ── Actions ───────────────────────────────────────────────
+/* ========== ACTIONS (methods) ========== */
+
+// Requirement: addTask() - prevent empty tasks, push new task, clear input
+// Also supports @keyup.enter on the input field
 function addTask() {
+  // Prevent adding empty or whitespace-only tasks (requirement)
   if (!newTaskName.value.trim()) return
+  
+  // Push a new task object with unique id, name, done: false, and priority
   tasks.value.push({
-    id:       Date.now(),
-    name:     newTaskName.value.trim(),
-    done:     false,
-    priority: newTaskPriority.value,
+    id:       Date.now(),               // unique identifier
+    name:     newTaskName.value.trim(), // task description
+    done:     false,                    // completion status
+    priority: newTaskPriority.value,    // extension: low/medium/high
   })
-  newTaskName.value     = ''
+  
+  // Clear the input field after adding (requirement)
+  newTaskName.value = ''
+  // Reset priority to default (optional)
   newTaskPriority.value = 'medium'
 }
 
-function toggleTask(id) {
-  const task = tasks.value.find(t => t.id === id)
-  if (task) task.done = !task.done
-}
-
+// Requirement: removeTask(id) - filter out task with matching id
 function removeTask(id) {
-  tasks.value = tasks.value.filter(t => t.id !== id)
+  tasks.value = tasks.value.filter(task => task.id !== id)
 }
 
-function clearDone() {
-  tasks.value = tasks.value.filter(t => !t.done)
+// Extension: clear all completed tasks at once
+function clearDoneTasks() {
+  tasks.value = tasks.value.filter(task => !task.done)
 }
 
-// ── Helpers ───────────────────────────────────────────────
-const priorityClass = { low: 'pri-low', medium: 'pri-medium', high: 'pri-high' }
-
+// Helper: capitalize first letter for filter labels and priority tags
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
@@ -74,12 +98,10 @@ function capitalize(str) {
 
 <template>
   <div class="app">
-    <h1>
-      <span class="title-icon">✓</span>
-      Task Counter
-    </h1>
+    <h1>Task Counter</h1>
 
-    <!-- ── Add task ─────────────────────────────────────── -->
+    <!-- ========== ADD TASK SECTION ========== -->
+    <!-- Requirement: Input with v-model + @keyup.enter + Add Task button -->
     <div class="input-card">
       <div class="input-row">
         <input
@@ -89,99 +111,87 @@ function capitalize(str) {
           placeholder="What needs to be done?"
           class="task-input"
         />
+        <!-- Extension: priority dropdown select -->
         <select v-model="newTaskPriority" class="pri-select">
           <option
             v-for="opt in priorityOptions"
             :key="opt.value"
             :value="opt.value"
-          >{{ opt.label }}</option>
+          >
+            {{ opt.label }}
+          </option>
         </select>
-        <button @click="addTask" class="btn btn-primary">
-          + Add
-        </button>
+        <button @click="addTask" class="btn btn-primary">+ Add Task</button>
       </div>
     </div>
 
-    <!-- ── Stats ────────────────────────────────────────── -->
+    <!-- ========== STATS BAR ========== -->
+    <!-- Requirement: Live stats using computed values (Total | Done | Pending) -->
     <div class="stats">
       <div class="stat">
-        <div class="stat-label">Total</div>
-        <div class="stat-num">{{ totalCount }}</div>
+        <span class="stat-label">Total</span>
+        <span class="stat-number">{{ totalCount }}</span>
       </div>
       <div class="stat">
-        <div class="stat-label">Done</div>
-        <div class="stat-num stat-done">{{ doneCount }}</div>
+        <span class="stat-label">Done</span>
+        <span class="stat-number">{{ doneCount }}</span>
       </div>
       <div class="stat">
-        <div class="stat-label">Pending</div>
-        <div class="stat-num stat-pending">{{ pendingCount }}</div>
+        <span class="stat-label">Pending</span>
+        <span class="stat-number">{{ pendingCount }}</span>
       </div>
     </div>
 
-    <!-- ── Filters ──────────────────────────────────────── -->
-    <div class="filter-row">
+    <!-- ========== FILTER BAR (Extension) ========== -->
+    <div class="filter-bar">
       <button
-        v-for="f in filterOptions"
-        :key="f"
-        :class="['filter-pill', { active: activeFilter === f }]"
-        @click="activeFilter = f"
+        v-for="filter in filterOptions"
+        :key="filter"
+        :class="['filter-btn', { active: activeFilter === filter }]"
+        @click="activeFilter = filter"
       >
-        {{ capitalize(f) }}
+        {{ capitalize(filter) }}
       </button>
-
+      <!-- Extension: "Clear All Done" button (only visible if there are done tasks) -->
       <button
         v-if="doneCount > 0"
-        @click="clearDone"
-        class="btn btn-danger clear-btn"
+        @click="clearDoneTasks"
+        class="btn btn-clear"
       >
-        Clear Done
+        ✖ Clear Done
       </button>
     </div>
 
-    <!-- ── Empty state ──────────────────────────────────── -->
-    <p v-if="filteredTasks.length === 0" class="empty">
-      {{ tasks.length === 0
-          ? 'No tasks yet. Add one above!'
-          : 'No tasks match this filter.' }}
-    </p>
+    <!-- ========== TASK LIST ========== -->
+    <!-- Requirement: Show empty state message when no tasks -->
+    <div v-if="filteredTasks.length === 0" class="empty-state">
+      <p v-if="tasks.length === 0">No tasks yet. Add one above!</p>
+      <p v-else>No tasks match the current filter.</p>
+    </div>
 
-    <!-- ── Task list ────────────────────────────────────── -->
-    <ul class="task-list">
+    <!-- Requirement: Render task list using v-for with :key -->
+    <ul v-else class="task-list">
       <li
         v-for="task in filteredTasks"
         :key="task.id"
-        :class="['task-item', { 'is-done': task.done }]"
+        class="task-item"
+        :class="{ 'task-done': task.done }"
       >
-        <!-- Custom checkbox -->
-        <button
-          :class="['cb', { checked: task.done }]"
-          @click="toggleTask(task.id)"
-          :aria-label="task.done ? 'Mark as pending' : 'Mark as done'"
-          role="checkbox"
-          :aria-checked="task.done"
-        >
-          <span v-if="task.done" class="cb-check">✓</span>
-        </button>
+        <!-- Requirement: Checkbox to mark task as done (v-model binds to task.done) -->
+        <input type="checkbox" v-model="task.done" class="task-checkbox" />
 
-        <!-- Task name -->
-        <label
-          :class="['task-name', { 'done-text': task.done }]"
-          @click="toggleTask(task.id)"
-        >
+        <!-- Requirement: Task name with strike-through when done -->
+        <span class="task-name" :class="{ 'done-text': task.done }">
           {{ task.name }}
-        </label>
+        </span>
 
-        <!-- Priority tag -->
-        <span :class="['pri-tag', priorityClass[task.priority]]">
+        <!-- Extension: Priority tag (Low/Medium/High) with appropriate styling -->
+        <span :class="['priority-tag', `priority-${task.priority}`]">
           {{ capitalize(task.priority) }}
         </span>
 
-        <!-- Remove button -->
-        <button
-          class="icon-btn"
-          @click="removeTask(task.id)"
-          aria-label="Remove task"
-        >
+        <!-- Requirement: Remove button for each task -->
+        <button @click="removeTask(task.id)" class="remove-btn" aria-label="Remove task">
           ✕
         </button>
       </li>
@@ -190,315 +200,260 @@ function capitalize(str) {
 </template>
 
 <style scoped>
-/* ── Reset ───────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-/* ── App shell ───────────────────────────────────────────── */
+/* Base styles */
 .app {
-  max-width: 640px;
-  margin: 40px auto;
-  padding: 0 16px 40px;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #1a1a1a;
-}
-
-/* ── Heading ─────────────────────────────────────────────── */
-h1 {
-  font-size: 22px;
-  font-weight: 500;
-  color: #1a1a1a;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.title-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: #534AB7;
-  color: #fff;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-/* ── Input card ──────────────────────────────────────────── */
-.input-card {
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 1.5rem;
   background: #ffffff;
-  border: 0.5px solid #ddd;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+/* Input card */
+.input-card {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
 }
 
 .input-row {
   display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.task-input {
-  flex: 1;
-  height: 36px;
-  padding: 0 12px;
-  border: 0.5px solid #ccc;
-  border-radius: 8px;
-  font-size: 14px;
-  background: #f6f6f6;
-  color: #1a1a1a;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.task-input::placeholder { color: #999; }
-
-.task-input:focus {
-  border-color: #534AB7;
-  box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.1);
-  background: #fff;
-}
-
-.pri-select {
-  height: 36px;
-  padding: 0 8px;
-  border: 0.5px solid #ccc;
-  border-radius: 8px;
-  font-size: 13px;
-  background: #f6f6f6;
-  color: #1a1a1a;
-  outline: none;
-  cursor: pointer;
-  min-width: 90px;
-}
-
-/* ── Buttons ─────────────────────────────────────────────── */
-.btn {
-  height: 36px;
-  padding: 0 14px;
-  border: 0.5px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  color: #1a1a1a;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: background 0.12s, transform 0.1s;
-  white-space: nowrap;
-}
-
-.btn:hover   { background: #f0f0f0; }
-.btn:active  { transform: scale(0.98); }
-
-.btn-primary {
-  background: #534AB7;
-  color: #EEEDFE;
-  border-color: #534AB7;
-}
-.btn-primary:hover { background: #3C3489; border-color: #3C3489; }
-
-.btn-danger {
-  background: transparent;
-  color: #A32D2D;
-  border-color: #ddd;
-}
-.btn-danger:hover { background: #FCEBEB; }
-
-/* ── Stats ───────────────────────────────────────────────── */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 1rem;
-}
-
-/* Base */
-.stat {
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb; 
-}
-
-/* Total (neutral) */
-.stat:nth-child(1) {
-  background: #f9fafb;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: #6B7280; 
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 4px;
-  font-weight: 500;
-}
-
-.stat-num {
-  font-size: 24px;
-  font-weight: 600;
-  color: #374151; 
-}
-
-.stat:first-child .stat-num {
-  color: #4B5563;
-}
-
-.stat-done,
-.stat-pending {
-  color: #374151; /* same as default */
-}
-
-/* ── Filters ─────────────────────────────────────────────── */
-.filter-row {
-  display: flex;
-  gap: 6px;
   align-items: center;
-  margin-bottom: 1rem;
   flex-wrap: wrap;
 }
 
-.filter-pill {
-  height: 30px;
-  padding: 0 14px;
-  border: 0.5px solid #ddd;
-  border-radius: 15px;
-  background: transparent;
-  color: #666;
-  font-size: 13px;
+.task-input {
+  flex: 2;
+  padding: 0.7rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.task-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.pri-select {
+  padding: 0.7rem;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.12s;
 }
 
-.filter-pill:hover {
-  background: #f0f0f0;
-  color: #1a1a1a;
-}
-
-.filter-pill.active {
-  background: #EEEDFE;
-  color: #3C3489;
-  border-color: #AFA9EC;
+.btn {
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: 12px;
   font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.clear-btn { margin-left: auto; }
+.btn-primary {
+  background: #6366f1;
+  color: white;
+}
 
-/* ── Empty state ─────────────────────────────────────────── */
-.empty {
+.btn-primary:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.btn-clear {
+  background: #fee2e2;
+  color: #dc2626;
+  margin-left: auto;
+}
+
+.btn-clear:hover {
+  background: #fecaca;
+}
+
+/* Stats bar */
+.stats {
+  display: flex;
+  justify-content: space-around;
+  background: #f1f5f9;
+  border-radius: 20px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
   text-align: center;
-  color: #999;
-  font-size: 14px;
-  font-style: italic;
-  padding: 2.5rem 0;
 }
 
-/* ── Task list ───────────────────────────────────────────── */
-.task-list {
-  list-style: none;
+.stat {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Filter bar */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 30px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn.active {
+  background: #6366f1;
+  color: white;
+  border-color: #6366f1;
+}
+
+.filter-btn:hover:not(.active) {
+  background: #f1f5f9;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Task list */
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .task-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  background: #ffffff;
-  border: 0.5px solid #e5e5e5;
-  border-radius: 8px;
-  transition: border-color 0.15s;
+  gap: 12px;
+  padding: 0.9rem 1rem;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
 }
 
-.task-item:hover { border-color: #bbb; }
-.task-item.is-done { opacity: 0.65; }
+.task-item:hover {
+  background: #f1f5f9;
+  transform: translateX(2px);
+}
 
-/* ── Custom checkbox ─────────────────────────────────────── */
-.cb {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  border: 1.5px solid #aaa;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.task-checkbox {
+  width: 18px;
+  height: 18px;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.12s, border-color 0.12s;
-  padding: 0;
+  accent-color: #6366f1;
 }
 
-.cb.checked {
-  background: #534AB7;
-  border-color: #534AB7;
-}
-
-.cb-check {
-  color: #fff;
-  font-size: 12px;
-  line-height: 1;
-  font-weight: 700;
-}
-
-/* ── Task name ───────────────────────────────────────────── */
 .task-name {
   flex: 1;
-  font-size: 14px;
-  color: #1a1a1a;
-  cursor: pointer;
-  line-height: 1.4;
-  user-select: none;
+  font-size: 0.95rem;
+  color: #0f172a;
 }
 
 .done-text {
   text-decoration: line-through;
-  color: #aaa;
+  color: #94a3b8;
 }
 
-/* ── Priority tag ────────────────────────────────────────── */
-.pri-tag {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 3px 9px;
-  border-radius: 10px;
+/* Priority tags */
+.priority-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 30px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
 }
 
-.pri-low    { background: #EAF3DE; color: #3B6D11; }
-.pri-medium { background: #FAEEDA; color: #854F0B; }
-.pri-high   { background: #FCEBEB; color: #A32D2D; }
+.priority-low {
+  background: #dcfce7;
+  color: #15803d;
+}
 
-/* ── Remove button ───────────────────────────────────────── */
-.icon-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
+.priority-medium {
+  background: #fed7aa;
+  color: #b45309;
+}
+
+.priority-high {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.remove-btn {
   background: transparent;
-  color: #bbb;
+  border: none;
+  font-size: 1.1rem;
   cursor: pointer;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  flex-shrink: 0;
-  transition: background 0.12s, color 0.12s;
+  color: #cbd5e1;
+  padding: 0 4px;
+  transition: all 0.2s;
 }
 
-.icon-btn:hover {
-  background: #FCEBEB;
-  color: #A32D2D;
+.remove-btn:hover {
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+/* Responsive tweaks */
+@media (max-width: 550px) {
+  .input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-bar {
+    justify-content: center;
+  }
+  
+  .btn-clear {
+    margin-left: 0;
+  }
 }
 </style>
