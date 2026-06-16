@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import Task1 from './views/Task1.vue';
+import TaskListView from './views/Day2/TaskListView_Task2.vue';
+import Task1 from './views/Day1/Task1.vue';
 </script>
 
 <template>
-  <Task1 />
+  <TaskListView />
+  <!-- <Task1 /> -->
 </template>
