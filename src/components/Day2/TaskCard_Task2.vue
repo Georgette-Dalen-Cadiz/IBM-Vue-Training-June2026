@@ -85,6 +85,7 @@ const isEditing = ref(false)
 const editedName = ref('')
 const nameInputRef = ref(null)
 
+// EXTENSION: Enter edit mode and focus input
 const startEdit = async () => {
   isEditing.value = true
   editedName.value = props.task.name
@@ -95,6 +96,7 @@ const startEdit = async () => {
   }
 }
 
+// EXTENSION: Emit updated task name to parent when editing is saved
 const saveEdit = () => {
   if (!isEditing.value) return // Prevent double-trigger from blur + enter
   isEditing.value = false
@@ -104,6 +106,7 @@ const saveEdit = () => {
   }
 }
 
+// EXTENSION: Exit edit mode without saving changes
 const cancelEdit = () => {
   isEditing.value = false
 }
@@ -114,6 +117,8 @@ const cancelEdit = () => {
 
     <div class="task-header">
       <div class="title-container">
+
+        <!-- EXTENSION: Editable task name (click to edit) -->
         <span 
           v-if="!isEditing" 
           class="name" 
@@ -122,6 +127,8 @@ const cancelEdit = () => {
         >
           {{ task.name }}
         </span>
+
+        <!-- EXTENSION: Input field for editing -->
         <input 
           v-else
           ref="nameInputRef"
