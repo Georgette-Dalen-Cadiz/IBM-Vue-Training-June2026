@@ -60,41 +60,93 @@ HINTS (read only if stuck)
 -->
 
 <script setup>
+import { ref, nextTick } from 'vue'
+
 // TODO 1 & 2: Define the task prop with type Object, required: true
+// EXTENSION: Added a priority badge prop
 const props = defineProps({
   task: {
     type: Object,
     required: true
+  },
+  priority: {
+    type: String,
+    default: 'low',
+    validator: (value) => ['low', 'medium', 'high'].includes(value)
   }
 })
 
 // TODO 3: Define emits for 'complete' and 'delete'
-const emit = defineEmits(['complete', 'delete'])
+// EXTENSION: Added 'update' to emits
+const emit = defineEmits(['complete', 'delete', 'update'])
+
+// EXTENSION: Edit mode state and logic
+const isEditing = ref(false)
+const editedName = ref('')
+const nameInputRef = ref(null)
+
+const startEdit = async () => {
+  isEditing.value = true
+  editedName.value = props.task.name
+  // Wait for the DOM to update so the input exists before focusing
+  await nextTick()
+  if (nameInputRef.value) {
+    nameInputRef.value.focus()
+  }
+}
+
+const saveEdit = () => {
+  if (!isEditing.value) return // Prevent double-trigger from blur + enter
+  isEditing.value = false
+  
+  if (editedName.value.trim() !== '' && editedName.value !== props.task.name) {
+    emit('update', { id: props.task.id, newName: editedName.value.trim() })
+  }
+}
+
+const cancelEdit = () => {
+  isEditing.value = false
+}
 </script>
 
 <template>
-  <!-- TODO 4: Wrap everything in a div with class "task-card"
-               Add :class="{ completed: task.done }" to the wrapper div -->
   <div class="task-card" :class="{ completed: task.done }">
 
     <div class="task-header">
-      <!-- TODO 5: Display the task name -->
-      <span class="name">{{ task.name }}</span>
+      <div class="title-container">
+        <span 
+          v-if="!isEditing" 
+          class="name" 
+          @click="startEdit"
+          title="Click to edit"
+        >
+          {{ task.name }}
+        </span>
+        <input 
+          v-else
+          ref="nameInputRef"
+          v-model="editedName"
+          class="name-input"
+          @keyup.enter="saveEdit"
+          @blur="saveEdit"
+          @keyup.esc="cancelEdit"
+        />
 
-      <!-- TODO 6: Add the named slot for metadata -->
+        <span class="badge" :class="priority">
+          {{ priority }}
+        </span>
+      </div>
+
       <div class="meta">
         <slot name="meta" />
       </div>
     </div>
 
     <div class="task-actions">
-      <!-- TODO 7: Add Complete/Undo button — text changes based on task.done -->
-      <!--         @click should emit 'complete' with task.id as payload -->
       <button class="btn-complete" @click="emit('complete', task.id)">
         {{ task.done ? 'Undo' : 'Complete' }}
       </button>
 
-      <!-- TODO 8: Add Delete button — emits 'delete' with task.id -->
       <button class="btn-delete" @click="emit('delete', task.id)">
         Delete
       </button>
@@ -122,10 +174,53 @@ const emit = defineEmits(['complete', 'delete'])
   align-items: center;
   margin-bottom: 10px;
 }
+.title-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .task-header span.name {
   font-weight: 600;
   font-size: 15px;
   color: #1B2A4A;
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: border-bottom-color 0.2s;
+}
+.task-header span.name:hover {
+  border-bottom-color: #1B2A4A;
+}
+.name-input {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1B2A4A;
+  padding: 2px 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  outline: none;
+}
+.name-input:focus {
+  border-color: #42B883;
+}
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: capitalize;
+  font-weight: bold;
+}
+.badge.low {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.badge.medium {
+  background: #fef08a;
+  color: #ca8a04;
+}
+.badge.high {
+  background: #fecaca;
+  color: #dc2626;
 }
 .task-header .meta {
   font-size: 12px;
