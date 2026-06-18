@@ -19,6 +19,10 @@ const showErrorBanner = computed(() => route.query.error === 'notfound')
 <template>
   <div class="home-view">
     <h1>📝 My Tasks</h1>
+    <nav class="page-nav">
+      <RouterLink to="/day4">Go to Task (DAY 4)</RouterLink>
+    </nav>
+    
 
     <!-- TODO 2: Show a warning banner if showErrorBanner is true -->
     <div class="error-banner" v-if="showErrorBanner">

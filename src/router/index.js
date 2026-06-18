@@ -59,6 +59,8 @@ import HomeView       from '../views/Day3/HomeView.vue'
 import TaskDetailView from '../views/Day3/TaskDetailView.vue'
 import AboutView      from '../views/Day3/AboutView.vue'
 
+import TaskListView   from '../views/Day4/TaskListView.vue'  // DAY 4
+
 // TODO 2: Import your Pinia task store so the guard can check if a task exists
 import { useTaskStore } from '@/stores/taskStore'
 
@@ -75,6 +77,9 @@ const routes = [
 
   // TODO 6: Add the /about route
   { path: '/about', component: AboutView },
+
+  // DEDICATED TO DAY 4
+  {path: '/day4', component: TaskListView },
 ]
 
 const router = createRouter({
